@@ -57,13 +57,30 @@ def _try_get_text_for_revisions(revids):
 
 
 def get_refs_for_revs_from_wikitext(revisions):
+    refs_found = []
     for rev in revisions:
-        templates = mwp.parse(rev['text']).filter_templates()
-        for t in templates:
-            logging.debug(t.name)
-            if 'cite' == t.name.split()[0]:
-                yield {'revid': rev['revid'],
-                       'citation': str(t)}
+        wikicode = mwp.parse(rev['text'])
+        refs = set(_get_ref_tag_refs_from_single_wikicode(wikicode))
+        refs.update(_get_cite_template_refs_from_single_wikicode(wikicode))
+        for r in refs:
+            yield {'revid': rev['revid'], 'citation': r}
+
+
+def _get_ref_tag_refs_from_single_wikicode(wikicode):
+    tags = wikicode.filter_tags()
+    for t in tags:
+        logging.debug(t.tag)
+        if ('ref' == t.tag.lower() and
+                t.contents is not None):
+            yield str(t.contents).strip()
+
+
+def _get_cite_template_refs_from_single_wikicode(wikicode):
+    templates = wikicode.filter_templates()
+    for t in templates:
+        logging.debug(t.name)
+        if 'cite' == t.name.lower().split()[0]:
+            yield str(t).strip()
 
 
 def dump_refs_to(outfile, refs):
