@@ -60,8 +60,8 @@ def get_refs_for_revs_from_wikitext(revisions):
     refs_found = []
     for rev in revisions:
         wikicode = mwp.parse(rev['text'])
-        refs = set(_get_ref_tag_refs_from_single_wikicode(wikicode))
-        refs.update(_get_cite_template_refs_from_single_wikicode(wikicode))
+        refs = set(_get_cite_template_refs_from_single_wikicode(wikicode))
+        # refs.update(_get_ref_tag_refs_from_single_wikicode(wikicode))
         for r in refs:
             yield {'revid': rev['revid'], 'citation': r}
 
@@ -79,7 +79,8 @@ def _get_cite_template_refs_from_single_wikicode(wikicode):
     templates = wikicode.filter_templates()
     for t in templates:
         logging.debug(t.name)
-        if 'cite' == t.name.lower().split()[0]:
+        if ('cite' == t.name.lower().split()[0] or
+                'citation' in t.name.lower()):
             yield str(t).strip()
 
 
