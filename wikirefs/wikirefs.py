@@ -5,6 +5,7 @@ import sys
 import csv
 import itertools
 import logging
+from .bibliography import Bibliography
 
 logging.basicConfig(level=logging.WARNING)
 REF_FIELDS = ['revid', 'citation']
@@ -53,17 +54,22 @@ def _try_get_text_for_revisions(revids):
     )
     for page in results['query']['pages'].values():
         for rev in page['revisions']:
-            yield {'revid': rev['revid'], 'text': rev['*']}
+            if '*' in rev:
+                yield {'revid': rev['revid'], 'text': rev['*']}
+            else:
+                yield {'revid': rev['revid'], 'text': ''}
 
 
 def get_refs_for_revs_from_wikitext(revisions):
     refs_found = []
     for rev in revisions:
         wikicode = mwp.parse(rev['text'])
-        refs = set(_get_cite_template_refs_from_single_wikicode(wikicode))
-        # refs.update(_get_ref_tag_refs_from_single_wikicode(wikicode))
+        b = Bibliography(wikicode)
+        logging.warning(rev['revid'])
+        refs = b.refs()
         for r in refs:
-            yield {'revid': rev['revid'], 'citation': r}
+            yield from [{'revid': rev['revid'],
+                        'citation': r['ref']}] * r['count']
 
 
 def _get_ref_tag_refs_from_single_wikicode(wikicode):

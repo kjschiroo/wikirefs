@@ -1,4 +1,5 @@
 from collections import Counter
+import logging
 
 
 def _tag_is_ref_tag(tag):
@@ -11,7 +12,10 @@ def _tag_contains_template(tag):
 
 
 def _tag_has_name_attribute(tag):
-    return tag.has('name') or tag.has('name')
+    attr = 'name'
+    if not tag.has(attr):
+        attr = 'Name'
+    return tag.has(attr) and (tag.get(attr).value is not None)
 
 
 def _get_ref_tag_name_value(tag):
@@ -60,10 +64,15 @@ class Bibliography(object):
         [{'ref': reference_text, 'count': n}, ...]
         '''
         named_ref_counts = self._count_named_refs()
-        reuse_counts = Counter(
-            {self._get_full_ref_text_from_name(name): count - 1
-             for name, count in named_ref_counts.items()}
-        )
+        reused = {}
+        for name, count in named_ref_counts.items():
+            try:
+                full_text = self._get_full_ref_text_from_name(name)
+                reused[full_text] = count
+            except UnknownNameError as e:
+                logging.warning('ref named "{0}" not found'.format(name))
+                continue
+        reuse_counts = Counter(reused)
         cite_tmplt_counts = self._count_all_citation_templates()
         return [{'ref': text, 'count': count}
                 for text, count in (reuse_counts + cite_tmplt_counts).items()]
