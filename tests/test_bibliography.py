@@ -10,6 +10,7 @@ class TestBibliography(unittest.TestCase):
             "<ref name='foo'> {{cite news}} </ref>\n"
             "<ref name='foo'/>\n"
             "{{cite news}}\n"
+            "{{cite news | more}}\n"
             "{{cite other}}\n"
             "<ref name='bar'> {{cite bar}} </ref>\n"
         )
@@ -18,10 +19,11 @@ class TestBibliography(unittest.TestCase):
         blg = Bibliography(wc)
         refs = blg.refs()
 
-        self.assertEqual(len(refs), 3)
+        self.assertEqual(len(refs), 4)
         valid_counts = {'{{cite news}}': 3,
                         '{{cite other}}': 1,
-                        '{{cite bar}}': 1}
+                        '{{cite bar}}': 1,
+                        '{{cite news | more}}': 1}
         for r in refs:
             self.assertEqual(valid_counts[r['ref']], r['count'])
 

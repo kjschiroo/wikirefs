@@ -1,6 +1,10 @@
 from collections import Counter
 import logging
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler())
+logger.setLevel(logging.ERROR)
+
 
 def _tag_is_ref_tag(tag):
     return 'ref' == tag.tag.lower()
@@ -68,9 +72,10 @@ class Bibliography(object):
         for name, count in named_ref_counts.items():
             try:
                 full_text = self._get_full_ref_text_from_name(name)
-                reused[full_text] = count
+                # Reduce by one to exclude first use
+                reused[full_text] = count - 1
             except UnknownNameError as e:
-                logging.warning('ref named "{0}" not found'.format(name))
+                logger.warning('ref named "{0}" not found'.format(name))
                 continue
         reuse_counts = Counter(reused)
         cite_tmplt_counts = self._count_all_citation_templates()
